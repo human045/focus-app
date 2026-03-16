@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-sora: 'Sora', sans-serif;
+  --font-dm-mono: 'DM Mono', monospace;
+}
+
+/* ── LIGHT THEME ── */
+:root {
+  --bg:       #f5f2ed;
+  --surface:  #ffffff;
+  --surface2: #f0ece5;
+  --border:   #e0d9cf;
+  --text:     #1a1714;
+  --muted:    #9b9088;
+  --accent:   #b8873a;
+  --accent2:  #a07030;
+}
+
+/* ── DARK THEME ── */
+.dark {
+  --bg:       #0f0f0f;
+  --surface:  #1a1a1a;
+  --surface2: #222222;
+  --border:   #2a2a2a;
+  --text:     #f0ede8;
+  --muted:    #6b6863;
+  --accent:   #e8d5b0;
+  --accent2:  #c9a96e;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sora);
+  transition: background 0.3s, color 0.3s;
+}
+
+.ring-progress {
+  stroke-dasharray: 565;
+  transition: stroke-dashoffset 0.8s cubic-bezier(0.4, 0, 0.2, 1), stroke 0.4s;
+}
+
+.timer-running::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button { opacity: 0; }
