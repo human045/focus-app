@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
 
-type Tab = 'signin' | 'signup'
+type Tab = 'signin' | 'signup' | 'reset'
 
 export default function AuthPage() {
   const supabase = createClient()
@@ -14,32 +14,41 @@ export default function AuthPage() {
   const [error, setError]       = useState('')
   const [success, setSuccess]   = useState('')
 
-  function resetMessages() { setError(''); setSuccess('') }
+  function reset() { setError(''); setSuccess('') }
 
   async function handleEmail() {
-    resetMessages()
-    if (!email.trim() || !password.trim()) { setError('Please fill in all fields.'); return }
-    if (password.length < 6) { setError('Password must be at least 6 characters.'); return }
+    reset()
+    if (!email.trim()) { setError('Please enter your email.'); return }
+    if (tab !== 'reset' && !password.trim()) { setError('Please enter your password.'); return }
+    if (tab !== 'reset' && password.length < 6) { setError('Password must be at least 6 characters.'); return }
     setLoading(true)
 
     if (tab === 'signup') {
       const { error } = await supabase.auth.signUp({
-        email,
-        password,
+        email, password,
         options: { emailRedirectTo: `${location.origin}/auth/callback` },
       })
       if (error) setError(error.message)
-      else setSuccess('Account created! Check your email for a confirmation link.')
-    } else {
+      else setSuccess('Check your email for a confirmation link.')
+
+    } else if (tab === 'signin') {
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) setError(error.message)
       else window.location.href = '/dashboard'
+
+    } else if (tab === 'reset') {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${location.origin}/auth/callback`,
+      })
+      if (error) setError(error.message)
+      else setSuccess('Password reset link sent — check your email.')
     }
+
     setLoading(false)
   }
 
   async function handleGoogle() {
-    resetMessages()
+    reset()
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { redirectTo: `${location.origin}/auth/callback` },
@@ -57,125 +66,128 @@ export default function AuthPage() {
                style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
             <span className="font-mono text-lg font-medium">F</span>
           </div>
-          <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>
-            Focus
-          </p>
-          <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>
-            Your personal pomodoro space
-          </p>
+          <p className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: 'var(--muted)' }}>Focus</p>
+          <p className="text-sm mt-1" style={{ color: 'var(--muted)' }}>Your personal pomodoro space</p>
         </div>
 
         <div className="rounded-3xl border p-7"
              style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
 
-          {/* Tabs */}
-          <div className="flex mb-6 border-b" style={{ borderColor: 'var(--border)' }}>
-            {(['signin', 'signup'] as Tab[]).map(t => (
-              <button key={t}
-                onClick={() => { setTab(t); resetMessages() }}
-                className="flex-1 pb-3 font-mono text-xs tracking-widest uppercase transition-all duration-200"
-                style={{
-                  borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
-                  color: tab === t ? 'var(--accent)' : 'var(--muted)',
-                  marginBottom: '-1px',
-                }}>
-                {t === 'signin' ? 'Sign in' : 'Sign up'}
+          {/* Tabs — only sign in / sign up */}
+          {tab !== 'reset' && (
+            <div className="flex mb-6 border-b" style={{ borderColor: 'var(--border)' }}>
+              {(['signin', 'signup'] as Tab[]).map(t => (
+                <button key={t} onClick={() => { setTab(t); reset() }}
+                  className="flex-1 pb-3 font-mono text-xs tracking-widest uppercase transition-all"
+                  style={{
+                    borderBottom: tab === t ? '2px solid var(--accent)' : '2px solid transparent',
+                    color: tab === t ? 'var(--accent)' : 'var(--muted)',
+                    marginBottom: '-1px',
+                  }}>
+                  {t === 'signin' ? 'Sign in' : 'Sign up'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Reset password header */}
+          {tab === 'reset' && (
+            <div className="mb-6">
+              <button onClick={() => { setTab('signin'); reset() }}
+                className="flex items-center gap-1.5 font-mono text-xs mb-4 transition-opacity hover:opacity-70"
+                style={{ color: 'var(--muted)' }}>
+                ← Back
               </button>
-            ))}
+              <p className="font-mono text-xs tracking-widest uppercase" style={{ color: 'var(--muted)' }}>
+                Reset password
+              </p>
+            </div>
+          )}
+
+          {/* Fields */}
+          <div className="space-y-3 mb-2">
+            <Field label="Email" type="email" value={email}
+              onChange={setEmail} placeholder="you@example.com" />
+            {tab !== 'reset' && (
+              <Field label="Password" type="password" value={password}
+                onChange={setPassword} placeholder="••••••••" onEnter={handleEmail} />
+            )}
           </div>
 
-          {/* Email + Password */}
-          <div className="space-y-3 mb-4">
-            <Field
-              label="Email"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="you@example.com"
-            />
-            <Field
-              label="Password"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="••••••••"
-              onEnter={handleEmail}
-            />
-          </div>
+          {/* Forgot password link */}
+          {tab === 'signin' && (
+            <div className="text-right mb-4">
+              <button onClick={() => { setTab('reset'); reset() }}
+                className="font-mono text-[10px] tracking-wider transition-opacity hover:opacity-70"
+                style={{ color: 'var(--muted)' }}>
+                Forgot password?
+              </button>
+            </div>
+          )}
 
-          {/* Error / success messages */}
+          {/* Messages */}
           {error   && <p className="text-xs mb-3 text-center" style={{ color: '#e87070' }}>{error}</p>}
           {success && <p className="text-xs mb-3 text-center" style={{ color: '#70c99a' }}>{success}</p>}
 
-          {/* Submit button */}
-          <button
-            onClick={handleEmail}
-            disabled={loading || !email || !password}
+          {/* Primary button */}
+          <button onClick={handleEmail}
+            disabled={loading || !email || (tab !== 'reset' && !password)}
             className="w-full py-3 rounded-xl font-mono text-xs font-medium tracking-wider
-                       transition-all duration-200 hover:opacity-90 active:scale-[0.98]
-                       disabled:opacity-40 disabled:cursor-not-allowed mb-5"
+                       transition-all hover:opacity-90 active:scale-[0.98]
+                       disabled:opacity-40 disabled:cursor-not-allowed mb-4"
             style={{ background: 'var(--accent)', color: '#0f0f0f' }}>
-            {loading ? 'Please wait...' : tab === 'signin' ? 'Sign in' : 'Create account'}
+            {loading ? 'Please wait...'
+              : tab === 'signin' ? 'Sign in'
+              : tab === 'signup' ? 'Create account'
+              : 'Send reset link'}
           </button>
 
-          {/* Divider */}
-          <div className="flex items-center gap-3 mb-4">
-            <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
-            <span className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>or</span>
-            <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
-          </div>
+          {/* Divider + Google — only on signin/signup */}
+          {tab !== 'reset' && (
+            <>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+                <span className="font-mono text-[10px]" style={{ color: 'var(--muted)' }}>or</span>
+                <div className="flex-1 h-px" style={{ background: 'var(--border)' }} />
+              </div>
 
-          {/* Google */}
-          <button
-            onClick={handleGoogle}
-            className="w-full flex items-center justify-center gap-3 py-3 rounded-xl
-                       text-sm font-medium transition-all duration-200 hover:scale-[1.01] active:scale-[0.98]"
-            style={{
-              background: 'var(--surface2)',
-              border: '0.5px solid var(--border)',
-              color: 'var(--text)',
-            }}>
-            <GoogleIcon />
-            Continue with Google
-          </button>
+              <button onClick={handleGoogle}
+                className="w-full flex items-center justify-center gap-3 py-3 rounded-xl
+                           text-sm font-medium transition-all hover:scale-[1.01] active:scale-[0.98] mb-3"
+                style={{ background: 'var(--surface2)', border: '0.5px solid var(--border)', color: 'var(--text)' }}>
+                <GoogleIcon /> Continue with Google
+              </button>
 
-          <p className="text-center text-xs mt-5" style={{ color: 'var(--muted)' }}>
-            Your data is private and only visible to you.
-          </p>
+              {/* Guest button */}
+              <button onClick={() => window.location.href = '/dashboard'}
+                className="w-full py-3 rounded-xl font-mono text-xs tracking-wider
+                           transition-all hover:opacity-70 active:scale-[0.98]"
+                style={{ color: 'var(--muted)' }}>
+                Continue as guest →
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function Field({
-  label, type, value, onChange, placeholder, onEnter,
-}: {
-  label: string
-  type: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-  onEnter?: () => void
+function Field({ label, type, value, onChange, placeholder, onEnter }: {
+  label: string; type: string; value: string
+  onChange: (v: string) => void; placeholder: string; onEnter?: () => void
 }) {
   return (
     <div>
-      <label
-        className="block font-mono text-[10px] tracking-wider uppercase mb-1.5"
-        style={{ color: 'var(--muted)' }}>
-        {label}
-      </label>
-      <input
-        type={type}
-        value={value}
-        placeholder={placeholder}
+      <label className="block font-mono text-[10px] tracking-wider uppercase mb-1.5"
+             style={{ color: 'var(--muted)' }}>{label}</label>
+      <input type={type} value={value} placeholder={placeholder}
         onChange={e => onChange(e.target.value)}
         onKeyDown={e => e.key === 'Enter' && onEnter?.()}
         className="w-full rounded-xl px-3.5 py-2.5 text-sm outline-none transition-colors"
         style={{ background: 'var(--surface2)', border: '0.5px solid var(--border)', color: 'var(--text)' }}
         onFocus={e => (e.target.style.borderColor = 'var(--accent)')}
-        onBlur={e  => (e.target.style.borderColor = 'var(--border)')}
-      />
+        onBlur={e  => (e.target.style.borderColor = 'var(--border)')} />
     </div>
   )
 }
