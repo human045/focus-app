@@ -10,7 +10,7 @@ export async function middleware(request: NextRequest) {
     {
       cookies: {
         getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet: any[]) {
+        setAll(cookiesToSet) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           supabaseResponse = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -23,14 +23,12 @@ export async function middleware(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/auth', request.url))
-  }
-
+  // If already logged in, don't show auth page — go straight to dashboard
   if (user && request.nextUrl.pathname === '/auth') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
+  // No redirect for unauthenticated users — dashboard works for guests too
   return supabaseResponse
 }
 
