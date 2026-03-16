@@ -10,7 +10,7 @@ import { SettingsPanel } from '@/components/ui/SettingsPanel'
 import { Topbar } from '@/components/ui/Topbar'
 
 interface Props {
-  user: { id: string; name: string; avatar?: string; email?: string }
+  user: { id: string; name: string; avatar?: string; email?: string } | null  // add | null
   initialTodos: Todo[]
   initialSettings: UserSettings | null
   initialStats: DailyStats[]
