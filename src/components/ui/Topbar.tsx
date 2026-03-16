@@ -7,19 +7,16 @@ interface Props {
   onToggleSettings: () => void
   onToggleStats: () => void
   onSignOut: () => void
+  onSignIn: () => void
   showStats: boolean
   showSettings: boolean
 }
 
 export function Topbar({
-  user, theme, onToggleTheme, onToggleSettings, onToggleStats, onSignOut, showStats, showSettings,
+  user, theme, onToggleTheme, onToggleSettings, onToggleStats,
+  onSignOut, onSignIn, showStats, showSettings,
 }: Props) {
-  const initials = user.name
-    .split(' ')
-    .map(w => w[0])
-    .join('')
-    .slice(0, 2)
-    .toUpperCase()
+  const initials = user?.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || ''
 
   return (
     <div className="flex items-center justify-between mb-6">
@@ -28,7 +25,6 @@ export function Topbar({
       </span>
 
       <div className="flex items-center gap-2">
-        {/* Stats */}
         <IconBtn onClick={onToggleStats} title="Stats" active={showStats}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <line x1="18" y1="20" x2="18" y2="10"/>
@@ -37,7 +33,6 @@ export function Topbar({
           </svg>
         </IconBtn>
 
-        {/* Theme */}
         <IconBtn onClick={onToggleTheme} title="Toggle theme">
           {theme === 'dark' ? (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -58,7 +53,6 @@ export function Topbar({
           )}
         </IconBtn>
 
-        {/* Settings */}
         <IconBtn onClick={onToggleSettings} title="Settings" active={showSettings}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
             <circle cx="12" cy="12" r="3"/>
@@ -66,66 +60,50 @@ export function Topbar({
           </svg>
         </IconBtn>
 
-        {/* Divider */}
         <div className="w-px h-5 mx-1" style={{ background: 'var(--border)' }} />
 
-        {/* Avatar */}
-        {user.avatar ? (
-          <img src={user.avatar} alt={user.name}
-            className="w-7 h-7 rounded-full object-cover flex-shrink-0" />
-        ) : (
-          <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-medium flex-shrink-0"
-               style={{ background: 'rgba(232,213,176,0.12)', border: '0.5px solid var(--accent2)', color: 'var(--accent)' }}>
-            {initials}
+        {user ? (
+          <div className="flex items-center gap-2">
+            {user.avatar ? (
+              <img src={user.avatar} alt={user.name} className="w-7 h-7 rounded-full object-cover" />
+            ) : (
+              <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-mono font-medium"
+                   style={{ background: 'rgba(232,213,176,0.12)', border: '0.5px solid var(--accent2)', color: 'var(--accent)' }}>
+                {initials}
+              </div>
+            )}
+            <span className="font-mono text-xs hidden sm:block" style={{ color: 'var(--muted)' }}>
+              {user.name.split(' ')[0]}
+            </span>
+            <IconBtn onClick={onSignOut} title="Sign out" danger>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+            </IconBtn>
           </div>
+        ) : (
+          <button onClick={onSignIn}
+            className="px-3 py-1.5 rounded-lg font-mono text-xs font-medium tracking-wider transition-all hover:opacity-90 active:scale-95"
+            style={{ background: 'var(--accent)', color: '#0f0f0f' }}>
+            Sign in
+          </button>
         )}
-
-        {/* Name */}
-        <span className="font-mono text-xs hidden sm:block" style={{ color: 'var(--muted)' }}>
-          {user.name.split(' ')[0]}
-        </span>
-
-        {/* Sign out */}
-        <IconBtn onClick={onSignOut} title="Sign out" danger>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </IconBtn>
       </div>
     </div>
   )
 }
 
-function IconBtn({
-  children, onClick, title, active, danger,
-}: {
-  children: React.ReactNode
-  onClick: () => void
-  title: string
-  active?: boolean
-  danger?: boolean
+function IconBtn({ children, onClick, title, active, danger }: {
+  children: React.ReactNode; onClick: () => void; title: string; active?: boolean; danger?: boolean
 }) {
   return (
-    <button
-      onClick={onClick}
-      title={title}
+    <button onClick={onClick} title={title}
       className="w-8 h-8 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105"
-      style={{
-        border: '0.5px solid var(--border)',
-        background: active ? 'rgba(232,213,176,0.08)' : 'transparent',
-        color: active ? 'var(--accent)' : 'var(--muted)',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.borderColor = danger ? '#e87070' : 'var(--accent)'
-        e.currentTarget.style.color = danger ? '#e87070' : 'var(--accent)'
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.borderColor = 'var(--border)'
-        e.currentTarget.style.color = active ? 'var(--accent)' : 'var(--muted)'
-      }}
-    >
+      style={{ border: '0.5px solid var(--border)', background: active ? 'rgba(232,213,176,0.08)' : 'transparent', color: active ? 'var(--accent)' : 'var(--muted)' }}
+      onMouseEnter={e => { e.currentTarget.style.borderColor = danger ? '#e87070' : 'var(--accent)'; e.currentTarget.style.color = danger ? '#e87070' : 'var(--accent)' }}
+      onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = active ? 'var(--accent)' : 'var(--muted)' }}>
       {children}
     </button>
   )
