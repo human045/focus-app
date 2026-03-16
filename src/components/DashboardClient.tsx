@@ -31,7 +31,7 @@ export function DashboardClient({ user, initialTodos, initialSettings, initialSt
 
   const [todos, setTodos]           = useState<Todo[]>(initialTodos)
   const [settings, setSettings]     = useState<UserSettings>(
-    initialSettings || { ...DEFAULT_SETTINGS, user_id: user.id }
+    initialSettings || { ...DEFAULT_SETTINGS, user_id: user?.id || '' }
   )
   const [stats, setStats]           = useState<DailyStats[]>(initialStats)
   const [showSettings, setShowSettings] = useState(false)
