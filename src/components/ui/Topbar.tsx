@@ -1,7 +1,7 @@
 'use client'
 
 interface Props {
-  user: { id: string; name: string; avatar?: string; email?: string }
+  user: { id: string; name: string; avatar?: string; email?: string } | null
   theme: 'dark' | 'light'
   onToggleTheme: () => void
   onToggleSettings: () => void
